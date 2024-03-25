@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -13,8 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { SigninValidation } from "@/lib/validation";
-import { z } from "zod";
-import { Loader } from "lucide-react";
+import * as z from "zod";
+import Loader from "@/components/shared/Loader";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
@@ -25,7 +24,7 @@ const SigninForm = () => {
   const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
   const navigate = useNavigate();
 
-  const { mutateAsync: signInAccount } = useSignInAccount();
+  const { mutateAsync: signInAccount, isPending } = useSignInAccount();
   // 1. Define your form.
   const form = useForm<z.infer<typeof SigninValidation>>({
     resolver: zodResolver(SigninValidation),
@@ -35,23 +34,21 @@ const SigninForm = () => {
     },
   });
 
-  // 2. Define a submit handler.
-  async function onSubmit(values: z.infer<typeof SigninValidation>) {
-    const session = await signInAccount({
-      email: values.email,
-      password: values.password,
-    });
+  const handleSignin = async (user: z.infer<typeof SigninValidation>) => {
+    const session = await signInAccount(user);
     if (!session) {
-      return toast({ title: "Sign in failed. Please try again" });
+      toast({ title: "Login failed. Please try again." });
+      return;
     }
     const isLoggedIn = await checkAuthUser();
     if (isLoggedIn) {
       form.reset();
       navigate("/");
     } else {
-      return toast({ title: "Sign up failed. P'ease try again" });
+      toast({ title: "Login failed. Please try again." });
+      return;
     }
-  }
+  };
 
   return (
     <Form {...form}>
@@ -61,11 +58,11 @@ const SigninForm = () => {
           Log in to your account
         </h2>
         <p className="text-light-3 small-medium md:base-regular mt-2">
-          Welcome back! Please enter your account details
+          Welcome back! Please enter your details.
         </p>
 
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(handleSignin)}
           className="flex flex-col gap-5 w-full mt-4"
         >
           <FormField
@@ -73,9 +70,9 @@ const SigninForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="shad-form_label">Email</FormLabel>
                 <FormControl>
-                  <Input type="email" className="shad-input" {...field} />
+                  <Input type="text" className="shad-input" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -86,7 +83,7 @@ const SigninForm = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="shad-form_label">Password</FormLabel>
                 <FormControl>
                   <Input type="password" className="shad-input" {...field} />
                 </FormControl>
@@ -95,20 +92,19 @@ const SigninForm = () => {
             )}
           />
           <Button type="submit" className="shad-button_primary">
-            {isUserLoading ? (
+            {isPending || isUserLoading ? (
               <div className="flex-center gap-2">
-                <Loader />
-                Loading...
+                <Loader /> Loading...
               </div>
             ) : (
-              "Sign in"
+              "Log in"
             )}
           </Button>
-          <p className="text-small-regular text-light-2 text-center mt-2 ">
-            Don't have an account?
+          <p className="text-small-regular text-light-2 text-center mt-2">
+            Don&apos;t have an account?
             <Link
               to="/sign-up"
-              className="text-primary-500 tetx-small-semibold ml-1"
+              className="text-primary-500 text-small-semibold ml-1"
             >
               Sign up
             </Link>

@@ -20,9 +20,9 @@ export async function createUserAccount(user: INewUser) {
       imageUrl: avatarUrl,
     });
     return newUser;
-  } catch (err) {
-    console.log(err);
-    return err;
+  } catch (error) {
+    console.log(error);
+    return error;
   }
 }
 export async function saveUserToDB(user: {
@@ -65,6 +65,7 @@ export async function getCurrentUser() {
     return currentUser.documents[0];
   } catch (error) {
     console.log(error);
+    return null;
   }
 }
 
@@ -296,7 +297,7 @@ export async function deletePost(postId?: string, imageId?: string) {
     );
     if (!statusCode) throw Error;
     await deleteFile(imageId);
-    return { status: "ok" };
+    return { status: "Ok" };
   } catch (error) {
     console.log(error);
   }
@@ -318,7 +319,7 @@ export async function searchPosts(searchTerm: string) {
 }
 
 export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
-  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(10)];
+  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
 
   if (pageParam) {
     queries.push(Query.cursorAfter(pageParam.toString()));

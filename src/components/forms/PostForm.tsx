@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import {
   Form,
   FormControl,
@@ -10,14 +10,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "../ui/form";
+import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import FileUploader from "../shared/FileUploader";
+import { FileUploader, Loader } from "@/components/shared";
 import { PostValidation } from "@/lib/validation";
 import { Models } from "appwrite";
 import { useUserContext } from "@/context/AuthContext";
-import { toast, useToast } from "../ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import {
   useCreatePost,
   useUpdatePost,
@@ -43,40 +43,41 @@ const PostForm = ({ post, action }: PostFormProps) => {
     defaultValues: {
       caption: post ? post?.caption : "",
       file: [],
-      location: post ? post?.location : "",
-      tags: post ? post?.tags.join(",") : "",
+      location: post ? post.location : "",
+      tags: post ? post.tags.join(",") : "",
     },
   });
 
-  // 2. Define a submit handler.
-  async function onSubmit(values: z.infer<typeof PostValidation>) {
+  const handleSubmit = async (value: z.infer<typeof PostValidation>) => {
     if (post && action === "Update") {
       const updatedPost = await updatePost({
-        ...values,
+        ...value,
         postId: post.$id,
-        imageId: post?.imageId,
-        imageUrl: post?.imageUrl,
+        imageId: post.imageId,
+        imageUrl: post.imageUrl,
       });
       if (!updatedPost) {
-        toast({ title: "Please try again" });
+        toast({
+          title: `${action} post failed. Please try again.`,
+        });
       }
       return navigate(`/posts/${post.$id}`);
     }
     const newPost = await createPost({
-      ...values,
+      ...value,
       userId: user.id,
     });
     if (!newPost) {
       toast({
-        title: "Please try again",
+        title: `${action} post failed. Please try again.`,
       });
     }
     navigate("/");
-  }
+  };
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(handleSubmit)}
         className="flex flex-col gap-9 w-full max-w-5xl"
       >
         <FormField
@@ -87,7 +88,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
               <FormLabel className="shad-form_label">Caption</FormLabel>
               <FormControl>
                 <Textarea
-                  className="shad-textarea custom-scrollbar "
+                  className="shad-textarea custom-scrollbar"
                   {...field}
                 />
               </FormControl>
@@ -145,7 +146,11 @@ const PostForm = ({ post, action }: PostFormProps) => {
           )}
         />
         <div className="flex gap-4 items-center justify-end">
-          <Button type="button" className="shad-button_dark_4">
+          <Button
+            type="button"
+            className="shad-button_dark_4"
+            onClick={() => navigate(-1)}
+          >
             Cancel
           </Button>
           <Button
@@ -153,7 +158,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
             className="shad-button_primary whitespace-nowrap"
             disabled={isLoadingCreate || isLoadingUpdate}
           >
-            {(isLoadingCreate || isLoadingUpdate) && "loader..."}
+            {(isLoadingCreate || isLoadingUpdate) && <Loader />}
             {action} Post
           </Button>
         </div>
